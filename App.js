@@ -8,6 +8,7 @@ import {
   FlatList,
   SafeAreaView,
 } from "react-native";
+const axios = require('axios');
 
 // import Lista from "./components/old/list";
 
@@ -48,6 +49,7 @@ export default class App extends Component {
   componentWillUnmount() {
     navigator.geolocation.clearWatch(this.watchId);
   }
+
   findCoordinates = () => {
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -70,22 +72,39 @@ export default class App extends Component {
     function success(position) {
       var latitude = position.coords.latitude;
       var longitude = position.coords.longitude;
-      var timestamp = position.coords.timestamp;
+      var timestamp = position.timestamp;
       var th = this;
-      Data = {
-        id: timestamp,
-        text: "pozycja gps",
-        color: "red",
-        text2: latitude,
-        text3: longitude,
-      };
+      // this.setState(
+      //  { Data: {
+      //     id: timestamp,
+      //     text: "pozycja gps",
+      //     color: "red",
+      //     text2: latitude,
+      //     text3: longitude,
+      //   }
+      // }
+      // )
+     const Data2= []
+      Data2.push({
+           id: timestamp,
+           text: "pozycja gps",
+           color: "red",
+           text2: latitude,
+           text3: longitude,
+         }
+       
+       )
+
+      console.log(this.state)
       this.serverRequest = axios
         .get(
-          `https://api.darksky.net/forecast/APIKEY/` +
+          `http://pi.ct8.pl/saveToDB.php?time=`+ timestamp +
+            `&` +
+            `lat=`+
             latitude +
-            `,` +
+            `&longitude=`+
             longitude +
-            `?units=auto`
+            `&s=0`
         )
         .then((result) => {
           // th.setState({
@@ -93,14 +112,17 @@ export default class App extends Component {
           //   loading: false,
           //   error: null,
           // });
+          console.log("axios result : " +result);
           console.log("axios success ");
         })
         .catch((err) => {
           // Something went wrong. Save the error in state and re-render.
-          this.setState({
-            loading: false,
-            error: err,
-          });
+
+          console.log("axios Error! ");
+          // this.setState({
+            
+          //   error: err,
+          // });
         });
     }
     function error() {
@@ -243,7 +265,7 @@ export default class App extends Component {
           {this.state.error ? <Text>Error: {this.state.error}</Text> : null}
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={this.saveToDB(Data)}>
+        <TouchableOpacity onPress={this.saveToDB()}>
           <Text style={styles.welcome}>Wyślij do Bazy danych</Text>
         </TouchableOpacity>
 
