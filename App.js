@@ -8,7 +8,10 @@ import {
   FlatList,
   SafeAreaView,
 } from "react-native";
-import axios from "axios";
+const axios = require('axios');
+
+// import Lista from "./components/old/list";
+
 export default class App extends Component {
   constructor(props) {
     super(props);
@@ -83,6 +86,7 @@ export default class App extends Component {
   componentWillUnmount() {
     navigator.geolocation.clearWatch(this.watchId);
   }
+
   findCoordinates = () => {
     console.log("click  odczyt");
     navigator.geolocation.getCurrentPosition(
@@ -151,7 +155,7 @@ export default class App extends Component {
           {this.state.error ? <Text>Error: {this.state.error}</Text> : null}
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={this.saveToDB}>
+        <TouchableOpacity onPress={this.saveToDB()}>
           <Text style={styles.welcome}>Wyślij do Bazy danych</Text>
         </TouchableOpacity>
 
