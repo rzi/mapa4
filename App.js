@@ -8,14 +8,11 @@ import {
   FlatList,
   SafeAreaView,
 } from "react-native";
-const axios = require('axios');
-
-// import Lista from "./components/old/list";
+const axios = require("axios");
 
 export default class App extends Component {
   constructor(props) {
     super(props);
-    this.initData = Data;
     this.state = {
       latitude: null,
       longitude: null,
@@ -116,7 +113,7 @@ export default class App extends Component {
   };
 
   saveToDB = () => {
-    this.state.Data.forEach((value, key, Data1) => {
+    this.state.Data.forEach((value, key, Data) => {
       console.log(`
             id: ${value.id}
             text: ${value.text}

@@ -9,11 +9,7 @@
   },
   "dependencies": {
     "@react-native-community/geolocation": "^2.0.2",
-<<<<<<< HEAD
     "axios": "^0.21.1",
-=======
-    "axios": "^0.21.0",
->>>>>>> 5cc6de450d4b5172b9db9eff5ed424e4e422ebde
     "expo": "~40.0.0",
     "expo-status-bar": "~1.0.3",
     "react": "16.13.1",
