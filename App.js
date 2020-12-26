@@ -3,13 +3,20 @@ import {
   Alert,
   StyleSheet,
   Text,
+  TextInput,
   View,
   TouchableOpacity,
   FlatList,
   SafeAreaView,
+  Button,
 } from "react-native";
-const axios = require("axios");
+import ModalApp from "./components/old/modalApp";
+import MyComponent1 from "./components/old/MyComponent";
+import MyTextInput from "./components/old/myimput";
 
+const axios = require("axios");
+const BLUE = "#428AF8";
+const LIGHT_GRAY = "#D3D3D3";
 export default class App extends Component {
   constructor(props) {
     super(props);
@@ -21,69 +28,101 @@ export default class App extends Component {
       timestamp: null,
       Data: [],
       s: 0,
+      isFocused: false,
+      text: null,
+      idName: null,
     };
   }
+  handleFocus = (event) => {
+    this.setState({ isFocused: true });
 
+    if (this.props.onFocus) {
+      this.props.onFocus(event);
+    }
+  };
+  handleBlur = (event) => {
+    this.setState({ isFocused: false });
+    if (this.props.onBlur) {
+      this.props.onBlur(event);
+    }
+  };
+
+  // handleChange(event) {
+  //   const { name, type, text } = event.nativeEvent;
+  //   let zm1 = text;
+  //   console.log(`event Name ${tzm1}`);
+  //   this.setState({ idName: zm1 });
+  // }
   componentDidMount() {
-    this.watchId = navigator.geolocation.watchPosition(
-      (position) => {
-        var d = new Date(position.timestamp);
-        var n = d.toString();
-        this.setState({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          error: null,
-          timestamp: n,
-        });
-        console.log(
-          "timestamp: " +
-            n +
-            " latitude: " +
-            position.coords.latitude +
-            " longitude: " +
-            position.coords.longitude
-        );
+    if (this.state.idName) {
+      this.watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          if (this.state.idName) {
+            var d = new Date(position.timestamp);
+            var n = d.toString();
+            this.setState({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              error: null,
+              timestamp: n,
+            });
+            console.log(
+              "timestamp: " +
+                n +
+                " latitude: " +
+                position.coords.latitude +
+                " longitude: " +
+                position.coords.longitude
+            );
 
-        this.state.Data.push({
-          id: Math.random().toString(12).substring(0),
-          text: new Date(position.timestamp).toString(),
-          color: "red",
-          text2: position.coords.longitude,
-          text3: position.coords.latitude,
-        });
+            this.state.Data.push({
+              id: Math.random().toString(12).substring(0),
+              text: new Date(position.timestamp).toString(),
+              color: "red",
+              text2: position.coords.longitude,
+              text3: position.coords.latitude,
+            });
 
-        axios
-          .get(
-            `https://busmapa.ct8.pl/saveToDB.php?time=` +
-              this.state.timestamp +
-              `&lat=` +
-              this.state.latitude +
-              `&longitude=` +
-              this.state.longitude +
-              `&s=0`
-          )
-          .then((result) => {
-            console.log("axios success " + result.data + " timestamp: " + n);
-          })
-          .catch((err) => {
-            console.log("axios failed " + err);
-          });
-        console.log("this.watchId: " + this.watchId);
-      },
-      (error) => this.setState({ error: error.message }),
-      {
-        enableHighAccuracy: true,
-        timeout: 20000,
-        maximumAge: 1000,
-        distanceFilter: 10,
-      }
-    );
+            axios
+              .get(
+                `https://busmapa.ct8.pl/saveToDB.php?time=` +
+                  this.state.timestamp +
+                  `&lat=` +
+                  this.state.latitude +
+                  `&longitude=` +
+                  this.state.longitude +
+                  `&s=0` +
+                  `&idName=` +
+                  this.state.idName
+              )
+              .then((result) => {
+                console.log(
+                  "axios success " + result.data + " timestamp: " + n
+                );
+              })
+              .catch((err) => {
+                console.log("axios failed " + err);
+              });
+            console.log("this.watchId: " + this.watchId);
+          } else {
+            Alert.alert("Brak identyfikatora", "Wprodadż identyfikator");
+          }
+        },
+        (error) => this.setState({ error: error.message }),
+        {
+          enableHighAccuracy: true,
+          timeout: 20000,
+          maximumAge: 1000,
+          distanceFilter: 1,
+        }
+      );
+    } else {
+      Alert.alert("Brak identyfikatora", "Wprodadż identyfikator");
+    }
   }
-
   componentWillUnmount() {
     navigator.geolocation.clearWatch(this.watchId);
   }
-
   findCoordinates = () => {
     console.log("click  odczyt");
     navigator.geolocation.getCurrentPosition(
@@ -106,13 +145,54 @@ export default class App extends Component {
           text2: position.coords.longitude,
           text3: position.coords.latitude,
         });
+        Alert.alert(
+          "Dane z GPS",
+          "Czy wysłać dane do Bazy Danych?",
+          [
+            {
+              text: "Nie",
+              onPress: () => console.log("Cancel Pressed"),
+              style: "cancel",
+            },
+            {
+              text: "Tak",
+              onPress: () => {
+                console.log("OK Pressed");
+                axios
+                  .get(
+                    `https://busmapa.ct8.pl/saveToDB.php?time=` +
+                      new Date(position.timestamp).toString() +
+                      `&lat=` +
+                      this.state.latitude +
+                      `&longitude=` +
+                      this.state.longitude +
+                      `&s=0` +
+                      `&idName=` +
+                      this.state.idName
+                  )
+                  .then((result) => {
+                    console.log(
+                      "axios success " +
+                        result.data +
+                        " timestamp: " +
+                        new Date(position.timestamp).toString()
+                    );
+                  })
+                  .catch((err) => {
+                    console.log("axios failed " + err);
+                  });
+              },
+            },
+          ],
+          { cancelable: false }
+        );
       },
       (error) => Alert.alert(error.message),
       { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
     );
   };
-
   saveToDB = () => {
+    console.log(`text: ${this.state.idName}`);
     this.state.Data.forEach((value, key, Data) => {
       console.log(`
             id: ${value.id}
@@ -126,7 +206,6 @@ export default class App extends Component {
 
     console.log(" clik wyślij");
   };
-
   renderItem = ({ item }) => (
     <View style={styles.item}>
       <View style={styles.marginLeft}>
@@ -141,9 +220,24 @@ export default class App extends Component {
       </View>
     </View>
   );
+
   render() {
+    const { isFocused } = this.state;
+    const { onFocus, onBlur, ...otherProps } = this.props;
     return (
       <SafeAreaView style={styles.container}>
+        <Text style={styles.top}>Identyfikator: </Text>
+        <TextInput
+          selectionColor={BLUE}
+          underlineColorAndroid={isFocused ? BLUE : LIGHT_GRAY}
+          placeholder="Wprowadź identyfikator"
+          onFocus={this.handleFocus}
+          onBlur={this.handleBlur}
+          style={styles.textInput}
+          {...otherProps}
+          onChangeText={(text) => this.setState({ idName: text })}
+          value={this.state.idName}
+        />
         <TouchableOpacity onPress={this.findCoordinates}>
           <Text style={styles.welcome}>Odczyt GPS</Text>
           <Text>Latitude: {this.state.latitude}</Text>
@@ -152,7 +246,7 @@ export default class App extends Component {
           {this.state.error ? <Text>Error: {this.state.error}</Text> : null}
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={this.saveToDB()}>
+        <TouchableOpacity onPress={this.saveToDB}>
           <Text style={styles.welcome}>Wyślij do Bazy danych</Text>
         </TouchableOpacity>
 
@@ -162,6 +256,14 @@ export default class App extends Component {
           data={this.state.Data.reverse()}
           keyExtractor={(item) => item.id.toString()}
           renderItem={this.renderItem}
+        />
+
+        <Button
+          title="wyczyść tabele"
+          onPress={() => {
+            // Alert.alert("Czyszcze tablice z danymi");
+            this.setState({ Data: [] });
+          }}
         />
       </SafeAreaView>
     );
@@ -226,5 +328,21 @@ const styles = StyleSheet.create({
     marginVertical: 4,
     fontSize: 16,
     marginLeft: 4,
+  },
+  textInput: {
+    marginTop: 1,
+    height: 40,
+    paddingLeft: 6,
+    fontSize: 26,
+    color: "red",
+    textAlign: "center",
+  },
+  top: {
+    marginTop: 20,
+    fontSize: 26,
+  },
+  fixToText: {
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
 });
