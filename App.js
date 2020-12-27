@@ -1,3 +1,4 @@
+import "react-native-gesture-handler";
 import React, { Component } from "react";
 import {
   Alert,
@@ -10,13 +11,15 @@ import {
   SafeAreaView,
   Button,
 } from "react-native";
-import ModalApp from "./components/old/modalApp";
-import MyComponent1 from "./components/old/MyComponent";
-import MyTextInput from "./components/old/myimput";
+import { NavigationContainer } from "@react-navigation/native";
+import { createStackNavigator } from "@react-navigation/stack";
 
 const axios = require("axios");
 const BLUE = "#428AF8";
 const LIGHT_GRAY = "#D3D3D3";
+
+const Stack = createStackNavigator();
+
 export default class App extends Component {
   constructor(props) {
     super(props);
@@ -28,97 +31,67 @@ export default class App extends Component {
       timestamp: null,
       Data: [],
       s: 0,
-      isFocused: false,
       text: null,
       idName: null,
     };
   }
-  handleFocus = (event) => {
-    this.setState({ isFocused: true });
 
-    if (this.props.onFocus) {
-      this.props.onFocus(event);
-    }
-  };
-  handleBlur = (event) => {
-    this.setState({ isFocused: false });
-    if (this.props.onBlur) {
-      this.props.onBlur(event);
-    }
-  };
-
-  // handleChange(event) {
-  //   const { name, type, text } = event.nativeEvent;
-  //   let zm1 = text;
-  //   console.log(`event Name ${tzm1}`);
-  //   this.setState({ idName: zm1 });
-  // }
   componentDidMount() {
-    if (this.state.idName) {
-      this.watchId = navigator.geolocation.watchPosition(
-        (position) => {
-          if (this.state.idName) {
-            var d = new Date(position.timestamp);
-            var n = d.toString();
-            this.setState({
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-              error: null,
-              timestamp: n,
-            });
-            console.log(
-              "timestamp: " +
-                n +
-                " latitude: " +
-                position.coords.latitude +
-                " longitude: " +
-                position.coords.longitude
-            );
+    this.watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        var d = new Date(position.timestamp);
+        var n = d.toString();
+        this.setState({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          error: null,
+          timestamp: n,
+        });
+        console.log(
+          "timestamp: " +
+            n +
+            " latitude: " +
+            position.coords.latitude +
+            " longitude: " +
+            position.coords.longitude
+        );
 
-            this.state.Data.push({
-              id: Math.random().toString(12).substring(0),
-              text: new Date(position.timestamp).toString(),
-              color: "red",
-              text2: position.coords.longitude,
-              text3: position.coords.latitude,
-            });
+        this.state.Data.push({
+          id: Math.random().toString(12).substring(0),
+          text: new Date(position.timestamp).toString(),
+          color: "red",
+          text2: position.coords.longitude,
+          text3: position.coords.latitude,
+        });
 
-            axios
-              .get(
-                `https://busmapa.ct8.pl/saveToDB.php?time=` +
-                  this.state.timestamp +
-                  `&lat=` +
-                  this.state.latitude +
-                  `&longitude=` +
-                  this.state.longitude +
-                  `&s=0` +
-                  `&idName=` +
-                  this.state.idName
-              )
-              .then((result) => {
-                console.log(
-                  "axios success " + result.data + " timestamp: " + n
-                );
-              })
-              .catch((err) => {
-                console.log("axios failed " + err);
-              });
-            console.log("this.watchId: " + this.watchId);
-          } else {
-            Alert.alert("Brak identyfikatora", "Wprodadż identyfikator");
-          }
-        },
-        (error) => this.setState({ error: error.message }),
-        {
-          enableHighAccuracy: true,
-          timeout: 20000,
-          maximumAge: 1000,
-          distanceFilter: 1,
-        }
-      );
-    } else {
-      Alert.alert("Brak identyfikatora", "Wprodadż identyfikator");
-    }
+        axios
+          .get(
+            `https://busmapa.ct8.pl/saveToDB.php?time=` +
+              this.state.timestamp +
+              `&lat=` +
+              this.state.latitude +
+              `&longitude=` +
+              this.state.longitude +
+              `&s=0` +
+              `&idName=` +
+              this.state.idName
+          )
+          .then((result) => {
+            console.log("axios success " + result.data + " timestamp: " + n);
+          })
+          .catch((err) => {
+            console.log("axios failed " + err);
+          });
+        console.log("this.watchId: " + this.watchId);
+      },
+      (error) => this.setState({ error: error.message }),
+      {
+        enableHighAccuracy: true,
+        timeout: 20000,
+        maximumAge: 1000,
+        distanceFilter: 10,
+      }
+    );
   }
   componentWillUnmount() {
     navigator.geolocation.clearWatch(this.watchId);
@@ -220,52 +193,84 @@ export default class App extends Component {
       </View>
     </View>
   );
-
   render() {
-    const { isFocused } = this.state;
-    const { onFocus, onBlur, ...otherProps } = this.props;
+    const HomeScreen = ({ navigation }) => {
+      return (
+        <SafeAreaView style={styles.container}>
+          {console.log("jestem na ekranie gółwnym")}
+          <Button
+            style={styles.topButton}
+            title="Idź do ustawień"
+            onPress={() => navigation.navigate("Profile", { name: "Jane" })}
+          />
+          <Text style={styles.textInput}>
+            Identyfikator: {this.state.idName}
+          </Text>
+          <TouchableOpacity onPress={this.findCoordinates}>
+            <Text style={styles.welcome}>Odczyt GPS</Text>
+            <Text>Latitude: {this.state.latitude}</Text>
+            <Text>Longitude: {this.state.longitude}</Text>
+            <Text>timestamp: {this.state.timestamp}</Text>
+            {this.state.error ? <Text>Error: {this.state.error}</Text> : null}
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={this.saveToDB}>
+            <Text style={styles.welcome}>Wyślij do Bazy danych</Text>
+          </TouchableOpacity>
+
+          <Text style={styles.headerText}> tabela danych z pozycją GPS </Text>
+
+          <FlatList
+            data={this.state.Data.reverse()}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={this.renderItem}
+          />
+
+          <Button
+            title="wyczyść tabele"
+            onPress={() => {
+              this.setState({ Data: [] });
+            }}
+          />
+        </SafeAreaView>
+      );
+    };
+    const ProfileScreen = ({ navigation, route }) => {
+      return (
+        <SafeAreaView style={styles.container}>
+          {console.log("jestem w ustawieniach")}
+          <Text>Ustaw identyfikator </Text>
+          <Text style={styles.top}>Identyfikator: </Text>
+          <TextInput
+            editable={true}
+            selectionColor={BLUE}
+            underlineColorAndroid={LIGHT_GRAY}
+            placeholder="Wprowadź identyfikator"
+            style={styles.textInput}
+            onChangeText={(text) => {
+              this.setState({ idName: text });
+              console.log(`idName ${this.state.idName}`);
+            }}
+            value={this.state.idName}
+          ></TextInput>
+        </SafeAreaView>
+      );
+    };
     return (
-      <SafeAreaView style={styles.container}>
-        <Text style={styles.top}>Identyfikator: </Text>
-        <TextInput
-          selectionColor={BLUE}
-          underlineColorAndroid={isFocused ? BLUE : LIGHT_GRAY}
-          placeholder="Wprowadź identyfikator"
-          onFocus={this.handleFocus}
-          onBlur={this.handleBlur}
-          style={styles.textInput}
-          {...otherProps}
-          onChangeText={(text) => this.setState({ idName: text })}
-          value={this.state.idName}
-        />
-        <TouchableOpacity onPress={this.findCoordinates}>
-          <Text style={styles.welcome}>Odczyt GPS</Text>
-          <Text>Latitude: {this.state.latitude}</Text>
-          <Text>Longitude: {this.state.longitude}</Text>
-          <Text>timestamp: {this.state.timestamp}</Text>
-          {this.state.error ? <Text>Error: {this.state.error}</Text> : null}
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={this.saveToDB}>
-          <Text style={styles.welcome}>Wyślij do Bazy danych</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.headerText}> tabela danych z pozycją GPS </Text>
-
-        <FlatList
-          data={this.state.Data.reverse()}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={this.renderItem}
-        />
-
-        <Button
-          title="wyczyść tabele"
-          onPress={() => {
-            // Alert.alert("Czyszcze tablice z danymi");
-            this.setState({ Data: [] });
-          }}
-        />
-      </SafeAreaView>
+      <NavigationContainer>
+        <Stack.Navigator>
+          <Stack.Screen
+            name="Home"
+            component={HomeScreen}
+            options={{ title: "GPS Tracker" }}
+          />
+          <Stack.Screen
+            name="Profile"
+            component={ProfileScreen}
+            options={{ title: "Ustawienia" }}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
     );
   }
 }
@@ -344,5 +349,8 @@ const styles = StyleSheet.create({
   fixToText: {
     flexDirection: "row",
     justifyContent: "space-between",
+  },
+  topButton: {
+    marginTop: 50,
   },
 });
