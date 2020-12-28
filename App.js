@@ -33,11 +33,12 @@ export default class App extends Component {
       s: 0,
       text: null,
       idName: null,
+      watchId: null,
     };
   }
 
   componentDidMount() {
-    this.watchId = navigator.geolocation.watchPosition(
+    let watchId = navigator.geolocation.watchPosition(
       (position) => {
         var d = new Date(position.timestamp);
         var n = d.toString();
@@ -82,17 +83,19 @@ export default class App extends Component {
           .catch((err) => {
             console.log("axios failed " + err);
           });
-        console.log("this.watchId: " + this.watchId);
       },
       (error) => this.setState({ error: error.message }),
       {
         enableHighAccuracy: true,
         timeout: 20000,
         maximumAge: 1000,
-        distanceFilter: 10,
+        distanceFilter: 1,
       }
     );
+    this.setState({ watchId });
+    console.log("this.watchId: " + watchId);
   }
+
   componentWillUnmount() {
     navigator.geolocation.clearWatch(this.watchId);
   }
@@ -197,7 +200,7 @@ export default class App extends Component {
     const HomeScreen = ({ navigation }) => {
       return (
         <SafeAreaView style={styles.container}>
-          {console.log("jestem na ekranie gółwnym")}
+          {console.log("jestem na ekranie głównym")}
           <Button
             style={styles.topButton}
             title="Idź do ustawień"
@@ -249,7 +252,7 @@ export default class App extends Component {
             style={styles.textInput}
             onChangeText={(text) => {
               this.setState({ idName: text });
-              console.log(`idName ${this.state.idName}`);
+              console.log(`idName: ${this.state.idName}`);
             }}
             value={this.state.idName}
           ></TextInput>
